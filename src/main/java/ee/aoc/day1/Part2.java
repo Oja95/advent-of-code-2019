@@ -2,11 +2,11 @@ package ee.aoc.day1;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import ee.aoc.InputFileReaderUtil;
 
 public class Part2 {
 
@@ -16,7 +16,7 @@ public class Part2 {
   public static void main(String[] args) throws URISyntaxException, IOException {
     var reachedFrequencies = new HashSet<>(Set.of(INITIAL_VALUE));
 
-    var inputList = Files.lines(Paths.get(Part2.class.getResource("/day1/input.txt").toURI()))
+    var inputList = InputFileReaderUtil.getLinesStreamFromClassPathResourceFile("/day1/input.txt")
         .map(Integer::valueOf)
         .collect(Collectors.toUnmodifiableList());
 
