@@ -12,4 +12,10 @@ public class Day4Test {
     Assertions.assertEquals(Part1.getMostSleptIdTimesSleptMinutes(InputFileReaderUtil.getLinesFromClassPathResourceFile("/day4/test-input.txt"))
     ,240);
   }
+
+  @Test
+  void test2() {
+    Assertions.assertEquals(Part2.getMostSleptIdTimesSleptMinutes(InputFileReaderUtil.getLinesFromClassPathResourceFile("/day4/test-input.txt"))
+        ,4455);
+  }
 }
