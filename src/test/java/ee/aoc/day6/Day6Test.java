@@ -12,6 +12,6 @@ public class Day6Test {
 
   @Test
   void testPart2() {
-    Assertions.assertEquals(Part2.getLargestNonInfiniteAreaSize(List.of("1, 1", "1, 6", "8, 3", "3, 4", "5, 5", "8, 9"), 32), 16);
+    Assertions.assertEquals(Part2.getLargestAreaWithMaxDistanceToAllPoints(List.of("1, 1", "1, 6", "8, 3", "3, 4", "5, 5", "8, 9"), 32), 16);
   }
 }
