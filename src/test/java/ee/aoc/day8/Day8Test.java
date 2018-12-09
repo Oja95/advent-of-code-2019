@@ -11,4 +11,9 @@ public class Day8Test {
   void testTreeMetaDataSum() {
     Assertions.assertEquals(41849, Part1.getMetaDataSum(InputFileReaderUtil.getLinesFromClassPathResourceFile("/day8/input.txt")));
   }
+
+  @Test
+  void testTreeRootNodeValue() {
+    Assertions.assertEquals(32487, Part2.getTreeRootNodeValue(InputFileReaderUtil.getLinesFromClassPathResourceFile("/day8/input.txt")));
+  }
 }
