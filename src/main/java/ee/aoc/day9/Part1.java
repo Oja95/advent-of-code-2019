@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 public class Part1 {
   public static void main(String[] args) {
     System.out.println(getWinningElfScore("459 players; last marble is worth 71790 points"));
+    System.out.println(getWinningElfScore("459 players; last marble is worth 7179000 points"));
   }
 
   static int getWinningElfScore(String input) {
