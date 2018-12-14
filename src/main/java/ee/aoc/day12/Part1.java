@@ -23,8 +23,7 @@ public class Part1 {
       throw new RuntimeException("Garbage input!");
     }
 
-
-    String padding = ".".repeat(20);
+    String padding = ".".repeat(5000);
     String state = padding + initialState + padding;
 
     List<PotRotation> potRotations = new ArrayList<>();
@@ -39,7 +38,7 @@ public class Part1 {
         throw new RuntimeException("Garbage input!");
       }
     }
-    for (long i = 0; i < 20L; i++) {
+    for (long i = 0; i < 5000L; i++) {
 
       char[] chars = state.toCharArray();
       for (int j = 2; j < state.length() - 2; j++) {
@@ -54,18 +53,19 @@ public class Part1 {
       }
       state = new String(chars);
 
-    }
-
-    System.out.println(state);
-
-    int sum = 0;
-    for (int i = 0; i < state.length(); i++) {
-      if (state.charAt(i) == '#') {
-        sum += i - 20;
+      int sum = 0;
+      for (int k = 0; k < state.length(); k++) {
+        if (state.charAt(k) == '#') {
+          sum += k - 5000;
+        }
       }
+      System.out.println(sum + " " + i);
     }
+    
+    // For part 2: Pattern is that the sum increases by 46 at some point for my input.
+    // After 5000th iteration, the sum is 230006, hence after (50 * 10^9) - 5000 the same linear pattern should apply
+    System.out.println(230_006L + ((50_000_000_000L - 5_000L) * 46L)); // 2300000000006
 
-    System.out.println(sum);
     return 0;
   }
 
