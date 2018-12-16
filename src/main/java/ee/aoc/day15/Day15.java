@@ -16,111 +16,85 @@ import ee.aoc.InputFileReaderUtil;
 public class Day15 {
 
   public static void main(String[] args) {
-    getCollisionCoords(InputFileReaderUtil.getLinesFromClassPathResourceFile("/day15/input.txt"));
+    getCollisionCoords(InputFileReaderUtil.getLinesFromClassPathResourceFile("/day15/test-input.txt"));
   }
 
   private static void getCollisionCoords(List<String> linesFromClassPathResourceFile) {
-    MatrixElement[][] matrix = new MatrixElement[32][32];
+    MatrixElement[][] initialMatrix = new MatrixElement[9][9];
     for (int i = 0; i < linesFromClassPathResourceFile.size(); i++) {
       char[] chars = linesFromClassPathResourceFile.get(i).toCharArray();
       for (int j = 0; j < chars.length; j++) {
         char element = chars[j];
         if (element == '#') {
-          matrix[j][i] = new Wall();
+          initialMatrix[j][i] = new Wall();
         } else if (element == '.') {
-          matrix[j][i] = new Cavern();
+          initialMatrix[j][i] = new Cavern();
         } else if (element == 'E') {
-          matrix[j][i] = new Elf();
+          initialMatrix[j][i] = new Elf();
         } else if (element == 'G') {
-          matrix[j][i] = new Goblin();
+          initialMatrix[j][i] = new Goblin();
         } else throw new RuntimeException("Garbage input!");
       }
     }
-    
-    int cycles = 0;
-    while (true){
 
 
-      for (int i = 0; i < 32; i++) {
-        for (int j = 0; j < 32; j++) {
-          if (matrix[j][i] instanceof Mob) {
-            Mob mob = (Mob) matrix[j][i];
-            if (mob.hasMovedThisTurn) {
-              mob.hasMovedThisTurn = false;
-              continue;
-            }
-            Coords mobCoords = Coords.of(j, i);
-            Coords targetMobCoords = canMobAttack(mob, matrix, mobCoords);
-            if (targetMobCoords != null) {
-              Mob targetMob = (Mob) matrix[targetMobCoords.x][targetMobCoords.y];
-              targetMob.health -= 3;
-              if (targetMob.health <= 0) {
-                matrix[targetMobCoords.x][targetMobCoords.y] = new Cavern();
-              }
-            } else {
-              if (existsClearPathToTarget(matrix, mobCoords,
-                  getEarliestOccurringCoordinate(findClosestReachableCoordsForAttackingEnemyTarget(matrix, mob, mobCoords)))) {
-                Coords stepTarget = getStepTarget(matrix, Coords.of(j, i));
-                matrix[stepTarget.x][stepTarget.y] = mob;
-                matrix[j][i] = new Cavern();
-                if (movesDownOrRight(mobCoords, stepTarget)) {
-                  ((Mob) matrix[stepTarget.x][stepTarget.y]).hasMovedThisTurn = true;
-                }
+    MatrixElement[][] matrix;
+    int cycles;
+    int newElfAtkpower = 3;
+    while (true) {
+      matrix = cloneMatrix(initialMatrix, newElfAtkpower++);
 
-                Coords newTargetMobCoords = canMobAttack(mob, matrix, mobCoords);
-                if (newTargetMobCoords != null) {
-                  Mob targetMob = (Mob) matrix[newTargetMobCoords.x][newTargetMobCoords.y];
-                  targetMob.health -= 3;
-                  if (targetMob.health <= 0) {
-                    matrix[newTargetMobCoords.x][newTargetMobCoords.y] = new Cavern();
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
-
-      boolean foundGoblin = false;
-      boolean foundElf = false;
-      
-      for (int i = 0; i < 32; i++) {
-        for (int j = 0; j < 32; j++) {
-          if (matrix[j][i] instanceof Goblin) {
-            foundGoblin = true;
-          }
-          
+      for (int i = 0; i < matrix.length; i++) {
+        for (int j = 0; j < matrix[0].length; j++) {
           if (matrix[j][i] instanceof Elf) {
-            foundElf = true;
+            ((Elf) matrix[j][i]).attackPower++;
           }
-          System.out.print(matrix[j][i]);
         }
-        System.out.println();
       }
-      System.out.println();
       
-      if (!foundElf || !foundGoblin) {
+      int initialElfAmount = getElfAmount(matrix);
+      FightSim fightSim = new FightSim(matrix).invoke();
+      matrix = fightSim.getMatrix();
+      cycles = fightSim.getCycles();
+
+      int hpSum = 0;
+      for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+          if (matrix[j][i] instanceof Mob) {
+            hpSum += ((Mob) matrix[j][i]).health;
+          }
+        }
+      }
+      
+      if (getElfAmount(matrix) == initialElfAmount) {
+        System.out.println(newElfAtkpower);
+        System.out.println(cycles);
+        System.out.println(hpSum);
+        System.out.println(cycles * hpSum);
         break;
       }
-
-      cycles++;
     }
+  }
 
-    int hpSum = 0;
-    for (int i = 0; i < 32; i++) {
-      for (int j = 0; j < 32; j++) {
-        if (matrix[j][i] instanceof Mob) {
-          hpSum += ((Mob) matrix[j][i]).health;
+
+  private static MatrixElement[][] cloneMatrix(MatrixElement[][] cloneableMatrix, int elfAtkPower) {
+    MatrixElement[][] newMatrix = new MatrixElement[cloneableMatrix.length][cloneableMatrix[0].length];
+    for (int i = 0; i < cloneableMatrix.length; i++) {
+      for (int j = 0; j < cloneableMatrix[0].length; j++) {
+        newMatrix[j][i] = cloneableMatrix[j][i];
+
+        if (newMatrix[j][i] instanceof Mob) {
+          ((Mob) newMatrix[j][i]).health = 200;
+        }
+        if (newMatrix[j][i] instanceof Elf) {
+          ((Elf) newMatrix[j][i]).attackPower = elfAtkPower;
         }
       }
     }
-    System.out.println(cycles);
-    System.out.println(hpSum);
-    System.out.println(cycles * hpSum);
+    
+    return newMatrix;
   }
   
-
   private static Coords canMobAttack(Mob mob, MatrixElement[][] matrix, Coords mobCoords) {
     MatrixElement upElement = matrix[mobCoords.x][mobCoords.y - 1];
     MatrixElement downElement = matrix[mobCoords.x][mobCoords.y + 1];
@@ -133,10 +107,6 @@ public class Day15 {
         .filter(x -> x.getKey() instanceof Mob)
         .filter(x -> ((Mob) x.getKey()).element == mob.getOpponentElement())
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    
-    List<MatrixElement> targets = List.of(upElement, downElement, leftElement, rightElement).stream()
-        .filter(x -> x instanceof Mob)
-        .filter(x -> ((Mob) x).element == mob.getOpponentElement()).collect(Collectors.toList());
     
     if (targetsMap.isEmpty()) return null;
     
@@ -151,6 +121,16 @@ public class Day15 {
     }
     
     return target;
+  }
+  
+  private static int getElfAmount(MatrixElement[][] matrix) {
+    int count = 0;
+    for (int i = 0; i < matrix.length; i++) {
+      for (int j = 0; j < matrix[0].length; j++) {
+        if (matrix[j][i] instanceof Elf) count++;
+      }
+    }
+    return count;
   }
   
   private static Coords getStepTarget(MatrixElement[][] matrix, Coords originCoords) {
@@ -276,6 +256,7 @@ public class Day15 {
     return enemyDistances.get(asInt);
   }
   
+  // another bfs 
   private static int shortestDistanceFromCoordtoCoord(MatrixElement[][] matrix, Coords origin, Coords target) {
     boolean[][] visited = new boolean[matrix.length][matrix[0].length];
     Queue<QueueItem> queue = new ArrayDeque<>();
@@ -319,12 +300,10 @@ public class Day15 {
       }
     }
     
-//    if (lowestDistance == Integer.MAX_VALUE) {
-//      throw new RuntimeException("Cant find path!");
-//    }
     return lowestDistance;
   }
 
+  // and another other wtf
   private static boolean existsClearPathToTarget(MatrixElement[][] matrix, Coords origin, Coords target) {
     if (target == null) return false;
     boolean[][] visited = new boolean[matrix.length][matrix[0].length];
@@ -340,25 +319,25 @@ public class Day15 {
       if (adjacentCoords.stream().anyMatch(x -> x.equals(target))) return true;
 
       // up
-      if (!visited[observableCoords.x][observableCoords.y - 1] && matrix[observableCoords.x][observableCoords.y - 1].element == '.') {
+      if (!visited[observableCoords.x][observableCoords.y - 1] && matrix[observableCoords.x][observableCoords.y - 1].canMoveInto()) {
         visited[observableCoords.x][observableCoords.y - 1] = true;
         queue.add(QueueItem.of(Coords.of(observableCoords.x, observableCoords.y - 1), observable.distance + 1));
       }
 
       // down
-      if (!visited[observableCoords.x][observableCoords.y + 1] && matrix[observableCoords.x][observableCoords.y + 1].element == '.') {
+      if (!visited[observableCoords.x][observableCoords.y + 1] && matrix[observableCoords.x][observableCoords.y + 1].canMoveInto()) {
         visited[observableCoords.x][observableCoords.y + 1] = true;
         queue.add(QueueItem.of(Coords.of(observableCoords.x, observableCoords.y + 1), observable.distance + 1));
       }
 
       // left
-      if (!visited[observableCoords.x - 1][observableCoords.y] && matrix[observableCoords.x - 1][observableCoords.y].element == '.') {
+      if (!visited[observableCoords.x - 1][observableCoords.y] && matrix[observableCoords.x - 1][observableCoords.y].canMoveInto()) {
         visited[observableCoords.x - 1][observableCoords.y] = true;
         queue.add(QueueItem.of(Coords.of(observableCoords.x - 1, observableCoords.y), observable.distance + 1));
       }
 
       // right
-      if (!visited[observableCoords.x + 1][observableCoords.y] && matrix[observableCoords.x + 1][observableCoords.y].element == '.') {
+      if (!visited[observableCoords.x + 1][observableCoords.y] && matrix[observableCoords.x + 1][observableCoords.y].canMoveInto()) {
         visited[observableCoords.x + 1][observableCoords.y] = true;
         queue.add(QueueItem.of(Coords.of(observableCoords.x + 1, observableCoords.y), observable.distance + 1));
       }
@@ -458,6 +437,7 @@ public class Day15 {
   static abstract class Mob extends MatrixElement {
     protected int health = 200;
     protected boolean hasMovedThisTurn = false;
+    protected int attackPower = 3;
     abstract char getOpponentElement();
 
     @Override
@@ -483,6 +463,90 @@ public class Day15 {
     @Override
     char getOpponentElement() {
       return 'G';
+    }
+  }
+
+  private static class FightSim {
+    private MatrixElement[][] matrix;
+    private int cycles;
+
+    public FightSim(MatrixElement[][] matrix) {
+      this.matrix = matrix;
+      this.cycles = 0;
+    }
+
+    public MatrixElement[][] getMatrix() {
+      return matrix;
+    }
+
+    public int getCycles() {
+      return cycles;
+    }
+
+    public FightSim invoke() {
+      while (true){
+        for (int i = 0; i < 9; i++) {
+          for (int j = 0; j < 9; j++) {
+            if (matrix[j][i] instanceof Mob) {
+              Mob mob = (Mob) matrix[j][i];
+              if (mob.hasMovedThisTurn) {
+                mob.hasMovedThisTurn = false;
+                continue;
+              }
+              Coords mobCoords = Coords.of(j, i);
+              Coords targetMobCoords = canMobAttack(mob, matrix, mobCoords);
+              if (targetMobCoords != null) {
+                Mob targetMob = (Mob) matrix[targetMobCoords.x][targetMobCoords.y];
+                targetMob.health -= mob.attackPower;
+                if (targetMob.health <= 0) {
+                  matrix[targetMobCoords.x][targetMobCoords.y] = new Cavern();
+                }
+              } else {
+                if (existsClearPathToTarget(matrix, mobCoords,
+                    getEarliestOccurringCoordinate(findClosestReachableCoordsForAttackingEnemyTarget(matrix, mob, mobCoords)))) {
+                  Coords stepTarget = getStepTarget(matrix, Coords.of(j, i));
+                  matrix[stepTarget.x][stepTarget.y] = mob;
+                  matrix[j][i] = new Cavern();
+                  if (movesDownOrRight(mobCoords, stepTarget)) {
+                    ((Mob) matrix[stepTarget.x][stepTarget.y]).hasMovedThisTurn = true;
+                  }
+  
+                  Coords newTargetMobCoords = canMobAttack(mob, matrix, mobCoords);
+                  if (newTargetMobCoords != null) {
+                    Mob targetMob = (Mob) matrix[newTargetMobCoords.x][newTargetMobCoords.y];
+                    targetMob.health -= mob.attackPower;
+                    if (targetMob.health <= 0) {
+                      matrix[newTargetMobCoords.x][newTargetMobCoords.y] = new Cavern();
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        boolean foundGoblin = false;
+        boolean foundElf = false;
+        
+        for (int i = 0; i < 9; i++) {
+          for (int j = 0; j < 9; j++) {
+            if (matrix[j][i] instanceof Goblin) {
+              foundGoblin = true;
+            }
+            
+            if (matrix[j][i] instanceof Elf) {
+              foundElf = true;
+            }
+          }
+        }
+        
+        if (!foundGoblin || !foundElf) {
+          break;
+        }
+  
+        cycles++;
+      }
+      return this;
     }
   }
 }
