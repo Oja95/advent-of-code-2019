@@ -1,14 +1,15 @@
 package ee.aoc.day8;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import ee.aoc.InputFileReaderUtil;
 
 
-public class Day2 {
+public class Part1 {
     public static void main(String[] args) {
         List<String> linesFromClassPathResourceFile = InputFileReaderUtil.getLinesFromClassPathResourceFile("/input_day8.txt");
         partOne(linesFromClassPathResourceFile);
@@ -37,25 +38,31 @@ public class Day2 {
             imageLayers.add(imageLayer);
         }
 
-
-        int[][] decodedImage = Arrays.stream(imageLayers.get(0))
-                .map(int[]::clone)
-                .toArray(int[][]::new);
-
-        for (int i = 1; i < imageLayers.size(); i++) {
-            int[][] newLayer = imageLayers.get(i);
-            for (int j = 0; j < height; j++) {
-                for (int k = 0; k < length; k++) {
-                    if (decodedImage[j][k] == 2) decodedImage[j][k] = newLayer[j][k];
-                }
+        int layerIndexWithLeastZeroes = Integer.MIN_VALUE;
+        int leastZeroes = Integer.MAX_VALUE;
+        for (int i = 0; i < imageLayers.size(); i++) {
+            int[][] imageLayer = imageLayers.get(i);
+            int zeroCount = getNumCount(length, height, imageLayer, 0);
+            System.out.println(zeroCount);
+            if (zeroCount < leastZeroes) {
+                layerIndexWithLeastZeroes = i;
+                leastZeroes = zeroCount;
             }
         }
 
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < length; j++) {
-                System.out.print(decodedImage[i][j] == 0 ? "-" : decodedImage[i][j]);
+        System.out.println(layerIndexWithLeastZeroes);
+        int[][] imageLayerWithLeastZeroes = imageLayers.get(layerIndexWithLeastZeroes);
+
+        System.out.println(getNumCount(length, height, imageLayerWithLeastZeroes, 1) * getNumCount(length, height, imageLayerWithLeastZeroes, 2));
+    }
+
+    private static int getNumCount(int length, int height, int[][] imageLayer, int num) {
+        int numCount = 0;
+        for (int j = 0; j < height; j++) {
+            for (int k = 0; k < length; k++) {
+                if (imageLayer[j][k] == num) numCount++;
             }
-            System.out.println();
         }
+        return numCount;
     }
 }

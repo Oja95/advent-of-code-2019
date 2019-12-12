@@ -11,7 +11,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import ee.aoc.InputFileReaderUtil;
 
 
-public class Day1 {
+public class Part1 {
     public static void main(String[] args) {
         List<String> linesFromClassPathResourceFile = InputFileReaderUtil.getLinesFromClassPathResourceFile("/input_day10.txt");
         partOne(linesFromClassPathResourceFile);
